@@ -7,11 +7,9 @@ const totalPriceElement = document.getElementById('totalPrice');
 const checkoutBtn = document.getElementById('checkoutBtn');
 
 // Initialize translations
-let currentLanguage = localStorage.getItem('language') || 'hu';
 
 document.addEventListener('DOMContentLoaded', () => {
     initLanguage();
-    loadCart();
 });
 
 // Ensure cart is saved and reloaded properly when navigating between pages
@@ -276,6 +274,39 @@ if (checkoutBtn) {
             });
     });
 }
+
+// Global addToCart function for all pages
+window.addToCart = function(bookId) {
+    console.log('[DEBUG] addToCart called with bookId:', bookId);
+    // Try to find the book in global book arrays
+    let book = null;
+    if (window.allBooks && Array.isArray(window.allBooks)) {
+        book = window.allBooks.find(b => b.id === bookId);
+    }
+    if (!book && window.books && Array.isArray(window.books)) {
+        book = window.books.find(b => b.id === bookId);
+    }
+    if (!book) {
+        console.error('[DEBUG] Book not found for id:', bookId, 'window.books:', window.books, 'window.allBooks:', window.allBooks);
+        showNotification('Nem található a könyv adata.', 'error');
+        return;
+    }
+    // Check if book already exists in cart
+    const existingItem = cart.find(item => item.id === bookId);
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({
+            ...book,
+            quantity: 1
+        });
+    }
+    saveAndRenderCart();
+    showNotification('Könyv hozzáadva a kosárhoz!');
+};
+
+// Make updateCartCount global for all pages
+window.updateCartCount = updateCartCount;
 
 // Initialize cart on page load
 document.addEventListener('DOMContentLoaded', () => {

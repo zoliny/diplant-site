@@ -25,6 +25,7 @@ const publisherSuggestions = document.getElementById('publisherSuggestions');
 const topicSuggestions = document.getElementById('topicSuggestions');
 
 let allBooks = [];
+window.allBooks = allBooks;
 let filters = {
     author: '',
     language: '',
@@ -318,38 +319,6 @@ if (searchForm) {
 // Shopping cart functionality
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 const cartCount = document.querySelector('.cart-count');
-
-function updateCartCount() {
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    cartCount.textContent = totalItems;
-}
-
-function addToCart(bookId) {
-    const book = allBooks.find(b => b.id === bookId);
-    if (book) {
-        // Load existing cart
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        
-        // Check if book already exists in cart
-        const existingItem = cart.find(item => item.id === bookId);
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            cart.push({
-                ...book,
-                quantity: 1
-            });
-        }
-        
-        // Save updated cart
-        localStorage.setItem('cart', JSON.stringify(cart));
-        
-        // Update UI
-        const cartCount = document.querySelector('.cart-count');
-        cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
-        showNotification('Könyv hozzáadva a kosárhoz!');
-    }
-}
 
 // Show notification
 function showNotification(message, type = 'success') {

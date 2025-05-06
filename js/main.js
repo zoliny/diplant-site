@@ -2,37 +2,6 @@
 const defaultPlaceholder = 'diplant.jpeg';
 
 // Shopping cart functionality
-let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-const cartCount = document.querySelector('.cart-count');
-
-function updateCartCount() {
-    if (!cartCount) return;
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    cartCount.textContent = totalItems;
-}
-
-function addToCart(bookId) {
-    const book = window.books?.find(b => b.id === bookId);
-    if (book) {
-        // Check if book already exists in cart
-        const existingItem = cart.find(item => item.id === bookId);
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            cart.push({
-                ...book,
-                quantity: 1
-            });
-        }
-        
-        // Save updated cart
-        localStorage.setItem('cart', JSON.stringify(cart));
-        
-        // Update UI
-        updateCartCount();
-        showNotification('Könyv hozzáadva a kosárhoz!');
-    }
-}
 
 function handleImageError(img) {
     img.onerror = null; // Prevent infinite loop
@@ -264,7 +233,7 @@ function createBookCard(book) {
                 <p class="author">${book.author}</p>
                 <p class="level">${book.language} ${book.level ? `- ${book.level}` : ''}</p>
                 <p class="price">${book.price} Ft</p>
-                <button onclick="addToCart('${book.id}')" class="add-to-cart">
+                <button class="add-to-cart" data-book-id="${book.id}">
                     Kosárba tesz
                 </button>
             </div>
@@ -313,11 +282,15 @@ if (contactForm) {
 
 // Slideshow functionality
 document.addEventListener('DOMContentLoaded', function() {
-    const slides = document.querySelectorAll('.slide');
-    const dotsContainer = document.querySelector('.slideshow-dots');
+    // Only target slides inside the main landing slideshow
+    const slideshowContainer = document.querySelector('.landing-visuals .slideshow-container');
+    if (!slideshowContainer) return;
+    const slides = slideshowContainer.querySelectorAll('.slide');
+    const dotsContainer = slideshowContainer.parentElement.querySelector('.slideshow-dots');
     let currentSlide = 0;
-    
+
     // Create dots
+    dotsContainer.innerHTML = '';
     slides.forEach((_, index) => {
         const dot = document.createElement('div');
         dot.classList.add('dot');
@@ -325,20 +298,17 @@ document.addEventListener('DOMContentLoaded', function() {
         dotsContainer.appendChild(dot);
     });
 
-    const dots = document.querySelectorAll('.dot');
+    const dots = dotsContainer.querySelectorAll('.dot');
 
-    // Initialize first slide and dot
     showSlide(0);
 
-    // Auto advance slides every 7 seconds
-    setInterval(() => {
+    let timer = setInterval(() => {
         nextSlide();
     }, 7000);
 
     function showSlide(n) {
         slides.forEach(slide => slide.classList.remove('active'));
         dots.forEach(dot => dot.classList.remove('active'));
-        
         slides[n].classList.add('active');
         dots[n].classList.add('active');
         currentSlide = n;
@@ -351,7 +321,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function goToSlide(n) {
         showSlide(n);
+        clearInterval(timer);
+        timer = setInterval(() => {
+            nextSlide();
+        }, 7000);
     }
+
+    // Attach prev/next button handlers
+    const prevBtn = slideshowContainer.querySelector('.slideshow-prev');
+    const nextBtn = slideshowContainer.querySelector('.slideshow-next');
+    if (prevBtn) prevBtn.onclick = () => goToSlide((currentSlide - 1 + slides.length) % slides.length);
+    if (nextBtn) nextBtn.onclick = () => goToSlide((currentSlide + 1) % slides.length);
 });
 
 // Load popular books
@@ -374,7 +354,10 @@ async function loadPopularBooks() {
             [validBooks[i], validBooks[j]] = [validBooks[j], validBooks[i]];
         }
         const selectedBooks = validBooks.slice(0, 11);
+        // Make selectedBooks available globally for addToCart
+        window.books = selectedBooks;
         bookGrid.innerHTML = selectedBooks.map((book, idx) => {
+            const addToCartBtn = `<button class="add-to-cart" data-book-id="${book.id}"><i class='fas fa-shopping-cart'></i> Kosárba</button>`;
             if (idx === 0) {
                 // Highlight the first book as special
                 return `
@@ -383,6 +366,7 @@ async function loadPopularBooks() {
                     <div class="book-info">
                         <h3>${book.title || 'Cím nélkül'}</h3>
                         <p class="author">${book.author}</p>
+                        ${addToCartBtn}
                     </div>
                 </div>
                 `;
@@ -393,11 +377,19 @@ async function loadPopularBooks() {
                     <div class="book-info">
                         <h3>${book.title || 'Cím nélkül'}</h3>
                         <p class="author">${book.author}</p>
+                        ${addToCartBtn}
                     </div>
                 </div>
                 `;
             }
         }).join('');
+        // Add event listeners to all add-to-cart buttons
+        bookGrid.querySelectorAll('.add-to-cart').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const bookId = this.getAttribute('data-book-id');
+                if (window.addToCart) window.addToCart(bookId);
+            });
+        });
     } catch (error) {
         bookGrid.innerHTML = '<p>Nem sikerült betölteni a könyveket.</p>';
     }
@@ -406,7 +398,6 @@ async function loadPopularBooks() {
 // Initialize the page
 document.addEventListener('DOMContentLoaded', () => {
     // loadBooks(); // Commented out to show only demo books
-    updateCartCount();
     handleSearchQuery();
     initLanguage();
     loadPopularBooks();
