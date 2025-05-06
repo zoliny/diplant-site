@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .container {
+        @apply w-full mx-auto px-4;
+        max-width: 1200px;
+    }
+
+    .btn {
+        @apply rounded-md px-4 py-2 transition-colors duration-300;
+    }
+
+    .btn-primary {
+        @apply bg-walnut-primary text-white hover:bg-walnut-secondary;
+    }
+
+    .btn-danger {
+        @apply bg-red-600 text-white hover:bg-red-700;
+    }
+
+    .input-field {
+        @apply w-full rounded-md border border-gray-300 px-3 py-2 focus:border-walnut-accent focus:ring-2 focus:ring-walnut-accent/20 transition-all duration-200;
+    }
+
+    .card {
+        @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all duration-300 hover:shadow-md;
+    }
+
+    .card-hover {
+        @apply hover:-translate-y-1 hover:shadow-lg;
+    }
+}
+
+@layer utilities {
+    .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .text-shadow-lg {
+        text-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .bg-gradient {
+        @apply bg-gradient-to-b from-walnut-primary/90 to-walnut-secondary/70;
+    }
+}

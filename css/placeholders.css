@@ -1,0 +1,100 @@
+.book-image {
+    background-color: #f5f5f5;
+    position: relative;
+}
+
+.book-image::after {
+    content: 'No image available';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #666;
+    font-size: 14px;
+}
+
+/* Input Placeholders */
+::placeholder {
+    color: #999;
+    opacity: 1;
+    font-size: 0.95rem;
+}
+
+:-ms-input-placeholder {
+    color: #999;
+    font-size: 0.95rem;
+}
+
+::-ms-input-placeholder {
+    color: #999;
+    font-size: 0.95rem;
+}
+
+/* Focus States */
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(212, 162, 118, 0.1);
+    transition: all 0.2s ease;
+}
+
+/* Selection */
+::selection {
+    background-color: var(--accent-color);
+    color: var(--white);
+}
+
+::-moz-selection {
+    background-color: var(--accent-color);
+    color: var(--white);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gray-light);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
+
+/* Disabled States */
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--gray-light);
+}
+
+/* Form validation states */
+input:invalid,
+textarea:invalid,
+select:invalid {
+    border-color: var(--error-color);
+}
+
+.error-message {
+    color: var(--error-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.success-message {
+    color: var(--success-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}

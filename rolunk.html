@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebase.com https://*.gstatic.com https://*.emailjs.com; connect-src 'self' wss://*.firebaseio.com https://*.googleapis.com https://*.firebase.com https://*.emailjs.com; script-src 'self' https://*.firebaseapp.com https://*.gstatic.com https://*.emailjs.com 'unsafe-inline'; style-src 'self' https://*.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.googleapis.com https://via.placeholder.com">
+    
+    <title>Rólunk - Di-Plant Nyelvkönyvbolt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+        emailjs.init("j2hXIX9LeNTCc2nEV");
+    </script>
+    <style>
+        .navbar, .user-actions, .nav-links {
+            position: relative;
+            z-index: 1002 !important;
+        }
+        .about-page {
+            position: relative;
+            z-index: 1;
+            margin-top: 0 !important;
+        }
+        /* Remove debug styles if present */
+        .nav-links {
+            background: none !important;
+        }
+        #ordersLink {
+            color: inherit !important;
+            font-weight: normal !important;
+            background: none !important;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <img src="logo.png" alt="Di-Plant logo" class="logo-image">
+                <span class="logo-text">Di-Plant Nyelvkönyvbolt</span>
+            </div>
+            <div class="search-container">
+                <form id="searchForm" onsubmit="return false;">
+                    <input type="search" id="searchInput" placeholder="Keresés..." aria-label="Keresés">
+                    <button type="submit" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="user-actions">
+                <div class="language-dropdown">
+                    <button class="language-btn">
+                        <i class="fas fa-globe"></i>
+                        <span id="currentLang">Magyar</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="language-options">
+                        <div class="language-option" data-lang="hu">Magyar</div>
+                        <div class="language-option" data-lang="en">English</div>
+                        <div class="language-option" data-lang="de">Deutsch</div>
+                        <div class="language-option" data-lang="es">Español</div>
+                    </div>
+                </div>
+                <button id="loginBtn" class="auth-btn">Bejelentkezés</button>
+                <button id="profileBtn" class="auth-btn" style="display: none;">
+                    <i class="fas fa-user"></i>
+                </button>
+                <button id="logoutBtn" class="auth-btn" style="display: none;">Kijelentkezés</button>
+                <div class="cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </div>
+                <div class="nav-links">
+                    <a href="rendelesek.html" id="ordersLink">Rendelések</a>
+                </div>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+        <div class="sub-header">
+            <nav class="sub-nav">
+                <a href="index.html" class="sub-nav-link">Főoldal</a>
+                <a href="konyvek.html" class="sub-nav-link">Könyvek</a>
+                <div class="books-dropdown sub-books-dropdown">
+                    <a href="konyvek.html">Összes könyv</a>
+                    <a href="konyvek.html?filter=author">Szerző szerint</a>
+                    <a href="konyvek.html?filter=language">Nyelv szerint</a>
+                    <a href="konyvek.html?filter=publisher">Kiadó szerint</a>
+                    <a href="konyvek.html?filter=topic">Téma szerint</a>
+                </div>
+                <a href="rolunk.html" class="sub-nav-link active">Rólunk</a>
+                <a href="index.html#kapcsolat" class="sub-nav-link">Kapcsolat</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="about-page">
+            <div class="about-container">
+                <h1>Rólunk</h1>
+                <div class="about-content">
+                    <div class="about-text">
+                        <p class="text-left">A Di-Plant Nyelvkönyvbolt több mint 20 éves tapasztalattal rendelkezik a nyelvkönyvek területén.</p>
+                        <h2>A Di-Plant Nyelvkönyvbolt</h2>
+                        <p>Könyvesboltunk a Gyulai Pál és Kőfaragó utca sarkán található. Megközelíthető a Blaha Lujza tértől, a Rókus kápolnától 2 perc sétával. Ha busszal érkezik, akkor az Uránia mozi megállónál kell leszállni. Gépkocsival a Vas utcán lehet bejönni, és onnan a második keresztutca balra.</p>
+
+                        <div class="contact-details">
+                            <h2>Kapcsolat</h2>
+                            <ul class="contact-list">
+                                <li><strong>Cím:</strong> 1085 Budapest Gyulai Pál utca 16.</li>
+                                <li><strong>Adószám:</strong> 14868795-2-41</li>
+                                <li><strong>Cégjegyzékszám:</strong> 01-09-923752</li>
+                                <li><strong>E-mail:</strong> rendeles@diplant-nyelvkonyvbolt.hu</li>
+                                <li><strong>Telefon:</strong> 06 1 338 39 49</li>
+                                <li><strong>Fax:</strong> 06 1 338 44 96</li>
+                            </ul>
+
+                            <div class="opening-hours">
+                                <h3>Nyitvatartás</h3>
+                                <p>Hétfőtől-Péntekig 10-18 óráig</p>
+                            </div>
+
+                            <div class="direct-message">
+                                <h3>Közvetlen üzenet</h3>
+                                <p>(regisztráció szükséges)</p>
+                                <form id="contactForm" class="contact-form">
+                                    <input type="email" name="email" placeholder="E-mail" required>
+                                    <textarea name="message" placeholder="Üzenet" required></textarea>
+                                    <button type="submit" class="message-btn">Üzenetküldés</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="store-location">
+                        <h2>Megközelítés</h2>
+                        <div class="map-container">
+                            <iframe 
+                                src="https://www.google.com/maps?q=1085+Budapest+Gyulai+P%C3%A1l+utca+16&output=embed"
+                                width="100%" 
+                                height="450" 
+                                style="border:0;" 
+                                allowfullscreen="" 
+                                loading="lazy" 
+                                referrerpolicy="no-referrer-when-downgrade">
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="manageUsersSection" style="display:none;">
+            <h2>Felhasználók kezelése</h2>
+            <div id="usersList">
+                <p>Felhasználók betöltése...</p>
+            </div>
+            <p style="color:red;">Figyelem: A felhasználók listázása csak szerveroldali admin jogosultsággal lehetséges. Ehhez külön backend szükséges.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Di-Plant Nyelvkönyvbolt</h4>
+                <p>Az Ön megbízható partnere a nyelvtanulásban</p>
+            </div>
+            <div class="footer-section">
+                <h4>Gyors linkek</h4>
+                <a href="konyvek.html">Könyvek</a>
+                <a href="rolunk.html">Rólunk</a>
+                <a href="index.html#kapcsolat">Kapcsolat</a>
+            </div>
+            <div class="footer-section">
+                <h4>Kövessen minket</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Di-Plant Nyelvkönyvbolt. Minden jog fenntartva.</p>
+        </div>
+    </footer>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/translations.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/email.js"></script>
+    <script>
+        // Show/hide Felhasználók kezelése tab
+        document.getElementById('manageUsersTab').addEventListener('click', function() {
+            document.querySelector('section.about-page').style.display = 'none';
+            document.getElementById('manageUsersSection').style.display = 'block';
+        });
+
+        // Placeholder for fetching users (client-side Firebase cannot list users!)
+        // You need to implement this on the server with Firebase Admin SDK and expose via a secure API.
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('usersList')) {
+                document.getElementById('usersList').innerHTML = '<p>Ehhez admin jogosultság és szerveroldali API szükséges.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
+``` 

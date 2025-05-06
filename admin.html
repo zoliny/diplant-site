@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Di-Plant Nyelvkönyvbolt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <!-- XLSX Library -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">Di-Plant Admin Panel</div>
+            <div class="nav-links">
+                <a href="index.html">Vissza a főoldalra</a>
+            </div>
+            <div class="user-actions">
+                <button id="langBtn" class="lang-btn">
+                    <i class="fas fa-globe"></i> <i class="fas fa-flag-uk"></i> EN
+                </button>
+                <span id="adminEmail" class="admin-email"></span>
+                <button id="logoutBtn" class="auth-btn">Kijelentkezés</button>
+            </div>
+        </nav>
+        <div class="sub-header">Adminisztrációs felület</div>
+    </header>
+    <main class="admin-main" style="display: flex; min-height: 80vh;">
+        <aside class="admin-sidebar" style="width: 220px; background: #f5f5f5; padding: 2rem 1rem 2rem 2rem; box-shadow: 2px 0 8px rgba(0,0,0,0.04);">
+            <nav class="sidebar-nav">
+                <button class="sidebar-tab-btn active" data-tab="books">Könyvek</button>
+                <button class="sidebar-tab-btn" data-tab="orders">Rendelések</button>
+                <button class="sidebar-tab-btn" data-tab="adminOrders">Rendeléseim</button>
+                <button class="sidebar-tab-btn" data-tab="users">Felhasználók</button>
+            </nav>
+        </aside>
+        <section class="admin-content" style="flex: 1; padding: 2rem; display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Könyvek tab -->
+            <div id="booksPanel" class="admin-panel active" style="background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 2rem;">
+                <h2>Könyvek kezelése</h2>
+                <p>Excel vagy CSV fájl feltöltése, amelyből a könyvek listája frissül a Firestore-ban. Az előző lista törlődik.</p>
+                <div class="button-group">
+                    <button id="addBookBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> Könyvek feltöltése
+                    </button>
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display: none">
+                </div>
+            </div>
+            <!-- Rendelések tab -->
+            <div id="ordersPanel" class="admin-panel" style="display:none; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 2rem;">
+                <h2>Felhasználói rendelések</h2>
+                <div class="orders-actions" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center;">
+                    <input type="text" id="orderSearchInput" placeholder="Keresés rendelésre, névre, emailre..." style="flex:1; padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc;">
+                    <button id="downloadOrdersBtn" class="btn-primary"><i class="fas fa-download"></i> Letöltés Excelbe</button>
+                </div>
+                <div class="orders-list">
+                    <!-- Orders by users will be displayed here -->
+                </div>
+            </div>
+            <!-- Rendeléseim tab -->
+            <div id="adminOrdersPanel" class="admin-panel" style="display:none; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 2rem;">
+                <h2>Admin Rendeléseim</h2>
+                <form id="adminOrderForm" style="margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label for="adminOrderBook">Könyv neve</label>
+                        <input type="text" id="adminOrderBook" name="adminOrderBook" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminOrderQty">Mennyiség</label>
+                        <input type="number" id="adminOrderQty" name="adminOrderQty" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminOrderPrice">Vásárolt ár (Ft)</label>
+                        <input type="number" id="adminOrderPrice" name="adminOrderPrice" min="0" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminOrderAuthor">Író</label>
+                        <input type="text" id="adminOrderAuthor" name="adminOrderAuthor">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminOrderPublisher">Kiadó</label>
+                        <input type="text" id="adminOrderPublisher" name="adminOrderPublisher">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminOrderLanguage">Nyelv</label>
+                        <input type="text" id="adminOrderLanguage" name="adminOrderLanguage">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminOrderTheme">Téma</label>
+                        <input type="text" id="adminOrderTheme" name="adminOrderTheme">
+                    </div>
+                    <button type="submit" class="btn-primary">Rendelés rögzítése</button>
+                </form>
+                <div class="admin-orders-list">
+                    <!-- Admin's own orders will be displayed here -->
+                </div>
+            </div>
+            <!-- Felhasználók tab -->
+            <div id="usersPanel" class="admin-panel" style="display:none; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 2rem;">
+                <h2>Felhasználók kezelése</h2>
+                <div class="users-list">
+                    <!-- Registered users will be displayed here -->
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/translations.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

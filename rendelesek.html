@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebase.com https://*.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' wss://*.firebaseio.com https://*.googleapis.com https://*.firebase.com; script-src 'self' https://*.firebaseapp.com https://*.gstatic.com https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' https://*.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.googleapis.com https://via.placeholder.com">
+    
+    <title>Rendelések - Di-Plant Nyelvkönyvbolt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <img src="logo.png" alt="Di-Plant logo" class="logo-image">
+                <span class="logo-text">Di-Plant Nyelvkönyvbolt</span>
+            </div>
+            <div class="search-container">
+                <form id="searchForm" onsubmit="return false;">
+                    <input type="search" id="searchInput" placeholder="Keresés..." aria-label="Keresés">
+                    <button type="submit" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="nav-links">
+                <a href="rendelesek.html" id="ordersLink" style="display: none;">Rendelések</a>
+            </div>
+            <div class="user-actions">
+                <div class="language-dropdown">
+                    <button class="language-btn">
+                        <i class="fas fa-globe"></i>
+                        <span id="currentLang">Magyar</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="language-options">
+                        <div class="language-option" data-lang="hu">Magyar</div>
+                        <div class="language-option" data-lang="en">English</div>
+                        <div class="language-option" data-lang="de">Deutsch</div>
+                        <div class="language-option" data-lang="es">Español</div>
+                    </div>
+                </div>
+                <button id="loginBtn" class="auth-btn">Bejelentkezés</button>
+                <button id="profileBtn" class="auth-btn" style="display: none;">
+                    <i class="fas fa-user"></i>
+                </button>
+                <button id="logoutBtn" class="auth-btn" style="display: none;">Kijelentkezés</button>
+                <div class="cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </div>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+        <div class="sub-header">
+            <nav class="sub-nav">
+                <a href="index.html" class="sub-nav-link">Főoldal</a>
+                <a href="konyvek.html" class="sub-nav-link">Könyvek</a>
+                <div class="books-dropdown sub-books-dropdown">
+                    <a href="konyvek.html">Összes könyv</a>
+                    <a href="konyvek.html?filter=author">Szerző szerint</a>
+                    <a href="konyvek.html?filter=language">Nyelv szerint</a>
+                    <a href="konyvek.html?filter=publisher">Kiadó szerint</a>
+                    <a href="konyvek.html?filter=topic">Téma szerint</a>
+                </div>
+                <a href="rolunk.html" class="sub-nav-link">Rólunk</a>
+                <a href="index.html#kapcsolat" class="sub-nav-link">Kapcsolat</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="orders-page">
+        <section class="orders-container">
+            <h1 class="orders-title">Rendelések</h1>
+            
+            <!-- Error message for non-logged in users -->
+            <div id="login-required" class="login-required" style="display: none;">
+                <div class="message-box">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>A rendelések megtekintéséhez bejelentkezés szükséges.</p>
+                    <button class="login-btn">Bejelentkezés</button>
+                </div>
+            </div>
+            
+            <!-- Orders content for logged in users -->
+            <div id="orders-content" style="display: none;">
+                <div class="orders-tabs">
+                    <button class="tab-btn active" data-tab="active-orders">Aktív rendelések</button>
+                    <button class="tab-btn" data-tab="past-orders">Korábbi rendelések</button>
+                    <button class="tab-btn" data-tab="order-details">Rendelési adatok</button>
+                </div>
+                
+                <!-- Active Orders Tab -->
+                <div id="active-orders" class="tab-content active">
+                    <div class="orders-list">
+                        <!-- Orders will be loaded here -->
+                        <div class="no-orders-message">
+                            <p>Önnek jelenleg nincsenek aktív rendelései.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Past Orders Tab -->
+                <div id="past-orders" class="tab-content">
+                    <div class="orders-list">
+                        <!-- Past orders will be loaded here -->
+                        <div class="no-orders-message">
+                            <p>Önnek még nincsenek korábbi rendelései.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Details Tab -->
+                <div id="order-details" class="tab-content">
+                    <form id="orderDetailsForm" class="order-details-form">
+                        <div class="form-section">
+                            <h2>Számlázási adatok (kötelező):</h2>
+                            
+                            <div class="form-group">
+                                <label for="billing-name">Név*:</label>
+                                <input type="text" id="billing-name" name="billing-name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="billing-address">Utca/házszám*:</label>
+                                <input type="text" id="billing-address" name="billing-address" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="billing-city">Település*:</label>
+                                <input type="text" id="billing-city" name="billing-city" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="billing-postcode">Irányítószám*:</label>
+                                <input type="text" id="billing-postcode" name="billing-postcode" required pattern="[0-9]{4}" title="Az irányítószám 4 számjegyből áll">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="billing-phone">Telefon*:</label>
+                                <input type="tel" id="billing-phone" name="billing-phone" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="billing-contact">Ügyintéző:</label>
+                                <input type="text" id="billing-contact" name="billing-contact">
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h2>Szállítási cím (csak, ha eltérő a számlázási címtől):</h2>
+                            
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" id="same-as-billing" name="same-as-billing" checked>
+                                <label for="same-as-billing">Megegyezik a számlázási címmel</label>
+                            </div>
+                            
+                            <div id="shipping-details" style="display: none;">
+                                <div class="form-group">
+                                    <label for="shipping-name">Szállítási hely neve:</label>
+                                    <input type="text" id="shipping-name" name="shipping-name">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="shipping-address">Utca/házszám:</label>
+                                    <input type="text" id="shipping-address" name="shipping-address">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="shipping-city">Település:</label>
+                                    <input type="text" id="shipping-city" name="shipping-city">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="shipping-postcode">Irányítószám:</label>
+                                    <input type="text" id="shipping-postcode" name="shipping-postcode" pattern="[0-9]{4}" title="Az irányítószám 4 számjegyből áll">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="shipping-phone">Telefon:</label>
+                                    <input type="tel" id="shipping-phone" name="shipping-phone">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="shipping-contact">Ügyintéző:</label>
+                                    <input type="text" id="shipping-contact" name="shipping-contact">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h2>Egyéb adatok:</h2>
+                            
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" id="newsletter" name="newsletter">
+                                <label for="newsletter">Hírlevél kérése</label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="school-support">Válassza ki az iskolát, melyet támogatni szeretne, vegyen részt pontgyűjtő akciónkban:</label>
+                                <div class="school-code-container">
+                                    <label for="school-code">Iskola-kód:</label>
+                                    <input type="text" id="school-code" name="school-code">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group checkbox-group required">
+                                <input type="checkbox" id="privacy-policy" name="privacy-policy" required>
+                                <label for="privacy-policy">Adatvédelmi nyilatkozat és felhasználási feltételek elfogadása*</label>
+                            </div>
+                            
+                            <p class="form-note">*A csillaggal jelölt mezőket kötelező kitölteni.</p>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="save-btn">Adatok mentése</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- User Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="info">Adataim</button>
+            </div>
+            <div id="userInfo" class="profile-section">
+                <form id="updateProfileForm">
+                    <input type="text" id="fullName" placeholder="Teljes név" required>
+                    <input type="email" id="email" placeholder="E-mail cím" required readonly>
+                    <input type="tel" id="phone" placeholder="Telefonszám">
+                    <input type="text" id="address" placeholder="Szállítási cím">
+                    <button type="submit">Adatok mentése</button>
+                </form>
+            </div>
+            <div id="userOrders" class="profile-section" style="display: none;">
+                <div class="orders-list">
+                    <!-- Orders will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Di-Plant Nyelvkönyvbolt</h4>
+                <p>Az Ön megbízható partnere a nyelvtanulásban</p>
+            </div>
+            <div class="footer-section">
+                <h4>Gyors linkek</h4>
+                <a href="index.html">Főoldal</a>
+                <a href="rolunk.html">Rólunk</a>
+                <a href="index.html#kapcsolat">Kapcsolat</a>
+            </div>
+            <div class="footer-section">
+                <h4>Kövessen minket</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Di-Plant Nyelvkönyvbolt. Minden jog fenntartva.</p>
+        </div>
+    </footer>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/translations.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/rendelesek.js"></script>
+    <script src="js/cart.js"></script>
+</body>
+</html>

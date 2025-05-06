@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebase.com https://*.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' wss://*.firebaseio.com https://*.googleapis.com https://*.firebase.com; script-src 'self' https://*.firebaseapp.com https://*.gstatic.com https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' https://*.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.googleapis.com https://via.placeholder.com">
+    
+    <title>Könyvek - Di-Plant Nyelvkönyvbolt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <img src="logo.png" alt="Di-Plant logo" class="logo-image">
+                <span class="logo-text">Di-Plant Nyelvkönyvbolt</span>
+            </div>
+            <div class="search-container">
+                <form id="searchForm" onsubmit="return false;">
+                    <input type="search" id="searchInput" placeholder="Keresés..." aria-label="Keresés">
+                    <button type="submit" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="user-actions">
+                <div class="language-dropdown">
+                    <button class="language-btn">
+                        <i class="fas fa-globe"></i>
+                        <span id="currentLang">Magyar</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="language-options">
+                        <div class="language-option" data-lang="hu">Magyar</div>
+                        <div class="language-option" data-lang="en">English</div>
+                        <div class="language-option" data-lang="de">Deutsch</div>
+                        <div class="language-option" data-lang="es">Español</div>
+                    </div>
+                </div>
+                <button id="loginBtn" class="auth-btn">Bejelentkezés</button>
+                <button id="profileBtn" class="auth-btn" style="display: none;">
+                    <i class="fas fa-user"></i>
+                </button>
+                <button id="logoutBtn" class="auth-btn" style="display: none;">Kijelentkezés</button>
+                <div class="cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </div>
+                <div class="nav-links">
+                    <a href="rendelesek.html" id="ordersLink" style="display: none;">Rendelések</a>
+                </div>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+        <div class="sub-header">
+            <nav class="sub-nav">
+                <a href="index.html" class="sub-nav-link">Főoldal</a>
+                <a href="konyvek.html" class="sub-nav-link active">Könyvek</a>
+                <div class="books-dropdown sub-books-dropdown">
+                    <a href="konyvek.html">Összes könyv</a>
+                    <a href="konyvek.html?filter=author">Szerző szerint</a>
+                    <a href="konyvek.html?filter=language">Nyelv szerint</a>
+                    <a href="konyvek.html?filter=publisher">Kiadó szerint</a>
+                    <a href="konyvek.html?filter=topic">Téma szerint</a>
+                </div>
+                <a href="rolunk.html" class="sub-nav-link">Rólunk</a>
+                <a href="index.html#kapcsolat" class="sub-nav-link">Kapcsolat</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="books-page genre-bubble-layout">
+            <div class="genre-sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-label">Nyelvek</div>
+                    <div class="sidebar-checkbox-list">
+                        <label><input type="checkbox" class="lang-checkbox" value="angol"> Angol</label>
+                        <label><input type="checkbox" class="lang-checkbox" value="német"> Német</label>
+                        <label><input type="checkbox" class="lang-checkbox" value="francia"> Francia</label>
+                        <label><input type="checkbox" class="lang-checkbox" value="spanyol"> Spanyol</label>
+                        <label><input type="checkbox" class="lang-checkbox" value="olasz"> Olasz</label>
+                        <label><input type="checkbox" class="lang-checkbox" value="magyar"> Magyar</label>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-label">Író</div>
+                    <input type="search" id="writerSearch" class="sidebar-writer-search" placeholder="Író neve...">
+                </div>
+            </div>
+            <div class="genre-bubbles-container">
+                <div class="genre-bubble" data-genre="nyelv-kurzuskönyv">Nyelv-kurzuskönyv</div>
+                <div class="genre-bubble" data-genre="könnyített-olvasmány">Könnyített olvasmány</div>
+                <div class="genre-bubble" data-genre="irodalom-egyéb">Irodalom - egyéb</div>
+                <div class="genre-bubble" data-genre="gyerek-könyv">Gyerek-könyv</div>
+                <div class="genre-bubble" data-genre="krimi">Krimi</div>
+            </div>
+        </section>
+        <style>
+        .genre-bubble-layout {
+            display: flex;
+            flex-direction: row;
+            gap: 2.5rem;
+            min-height: 400px;
+        }
+        .genre-sidebar {
+            min-width: 220px;
+            background: #f8f5f2;
+            border-radius: 1.2rem;
+            box-shadow: 0 2px 12px rgba(176,137,104,0.07);
+            padding: 2rem 1.2rem 1.5rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.2rem;
+            height: fit-content;
+        }
+        .sidebar-section {
+            margin-bottom: 1.2rem;
+        }
+        .sidebar-label {
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #7c5e3c;
+            margin-bottom: 0.7rem;
+        }
+        .sidebar-checkbox-list label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 1rem;
+            color: #5e4632;
+            cursor: pointer;
+        }
+        .sidebar-checkbox-list input[type="checkbox"] {
+            accent-color: #b08968;
+            margin-right: 0.5em;
+        }
+        .sidebar-writer-search {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            border-radius: 2rem;
+            border: 1.5px solid #e0e0e0;
+            background: #fff;
+            font-size: 1rem;
+            color: #5e4632;
+            outline: none;
+            transition: border 0.18s, box-shadow 0.18s;
+        }
+        .sidebar-writer-search:focus {
+            border: 1.5px solid #b08968;
+            box-shadow: 0 4px 16px rgba(176,137,104,0.09);
+        }
+        .genre-bubbles-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2.2rem;
+            align-items: center;
+            justify-content: flex-start;
+            flex: 1 1 0%;
+            padding: 2.5rem 0;
+        }
+        .genre-bubble {
+            background: linear-gradient(120deg, #e9dac1 0%, #b08968 100%);
+            color: #5e4632;
+            font-size: 1.18rem;
+            font-weight: 700;
+            border-radius: 50%;
+            width: 170px;
+            height: 170px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 24px rgba(176,137,104,0.13);
+            cursor: pointer;
+            transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+            text-align: center;
+            user-select: none;
+        }
+        .genre-bubble:hover {
+            transform: scale(1.07);
+            background: linear-gradient(120deg, #b08968 0%, #e9dac1 100%);
+            box-shadow: 0 8px 32px rgba(176,137,104,0.18);
+        }
+        @media (max-width: 900px) {
+            .genre-bubble-layout { flex-direction: column; gap: 1.5rem; }
+            .genre-sidebar { width: 100%; min-width: unset; flex-direction: row; gap: 2rem; justify-content: center; }
+            .genre-bubbles-container { justify-content: center; }
+        }
+        @media (max-width: 600px) {
+            .genre-bubble { width: 110px; height: 110px; font-size: 0.98rem; }
+            .genre-sidebar { padding: 1.2rem 0.5rem; }
+        }
+        </style>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Di-Plant Nyelvkönyvbolt</h4>
+                <p>Az Ön megbízható partnere a nyelvtanulásban</p>
+            </div>
+            <div class="footer-section">
+                <h4>Gyors linkek</h4>
+                <a href="index.html">Főoldal</a>
+                <a href="rolunk.html">Rólunk</a>
+                <a href="index.html#kapcsolat">Kapcsolat</a>
+            </div>
+            <div class="footer-section">
+                <h4>Kövessen minket</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Di-Plant Nyelvkönyvbolt. Minden jog fenntartva.</p>
+        </div>
+    </footer>
+
+    <style>
+    .short-filter {
+        width: 50% !important;
+        min-width: 90px;
+        max-width: 180px;
+        margin: 0 auto;
+        display: block;
+    }
+    .detailed-filter-label {
+        font-size: 1.08rem;
+        font-weight: 600;
+        color: #7c5e3c;
+        margin-bottom: 0.5rem;
+        margin-top: 0.5rem;
+        text-align: center;
+        letter-spacing: 0.2px;
+    }
+    @media (max-width: 600px) {
+        .short-filter { width: 90px !important; }
+    }
+    </style>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/translations.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/books.js"></script>
+</body>
+</html>

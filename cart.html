@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebase.com https://*.gstatic.com; connect-src 'self' wss://*.firebaseio.com https://*.googleapis.com https://*.firebase.com; script-src 'self' https://*.firebaseapp.com https://*.gstatic.com 'unsafe-inline'; style-src 'self' https://*.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.googleapis.com https://via.placeholder.com">
+    
+    <title>Kosár - Di-Plant Nyelvkönyvbolt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <img src="logo.png" alt="Di-Plant logo" class="logo-image">
+                <span class="logo-text">Di-Plant Nyelvkönyvbolt</span>
+            </div>
+            <div class="search-container">
+                <form id="searchForm" onsubmit="return false;">
+                    <input type="search" id="searchInput" placeholder="Keresés..." aria-label="Keresés">
+                    <button type="submit" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="user-actions">
+                <div class="language-dropdown">
+                    <button class="language-btn">
+                        <i class="fas fa-globe"></i>
+                        <span id="currentLang">Magyar</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="language-options">
+                        <div class="language-option" data-lang="hu">Magyar</div>
+                        <div class="language-option" data-lang="en">English</div>
+                        <div class="language-option" data-lang="de">Deutsch</div>
+                        <div class="language-option" data-lang="es">Español</div>
+                    </div>
+                </div>
+                <button id="loginBtn" class="auth-btn">Bejelentkezés</button>
+                <button id="profileBtn" class="auth-btn" style="display: none;">
+                    <i class="fas fa-user"></i>
+                </button>
+                <button id="logoutBtn" class="auth-btn" style="display: none;">Kijelentkezés</button>
+                <div class="cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </div>
+                <div class="nav-links">
+                    <a href="rendelesek.html" id="ordersLink" style="display: none;">Rendelések</a>
+                </div>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+        <div class="sub-header">
+            <nav class="sub-nav">
+                <a href="index.html" class="sub-nav-link">Főoldal</a>
+                <a href="konyvek.html" class="sub-nav-link">Könyvek</a>
+                <div class="books-dropdown sub-books-dropdown">
+                    <a href="konyvek.html">Összes könyv</a>
+                    <a href="konyvek.html?filter=author">Szerző szerint</a>
+                    <a href="konyvek.html?filter=language">Nyelv szerint</a>
+                    <a href="konyvek.html?filter=publisher">Kiadó szerint</a>
+                    <a href="konyvek.html?filter=topic">Téma szerint</a>
+                </div>
+                <a href="rolunk.html" class="sub-nav-link">Rólunk</a>
+                <a href="index.html#kapcsolat" class="sub-nav-link">Kapcsolat</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="cart-section">
+            <h1>Kosár</h1>
+            <div class="cart-container">
+                <div class="cart-items">
+                    <!-- Cart items will be loaded here -->
+                </div>
+                <div class="cart-summary">
+                    <h3>Összesítés</h3>
+                    <div class="summary-details">
+                        <p>Termékek összesen: <span id="itemCount">0</span> db</p>
+                        <p>Végösszeg: <span id="totalPrice">0</span> Ft</p>
+                    </div>
+                    <button id="checkoutBtn" class="checkout-btn" disabled>
+                        Megrendelés
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- User Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="info">Adataim</button>
+            </div>
+            <div id="userInfo" class="profile-section">
+                <form id="updateProfileForm">
+                    <input type="text" id="fullName" placeholder="Teljes név" required>
+                    <input type="email" id="email" placeholder="E-mail cím" required readonly>
+                    <input type="tel" id="phone" placeholder="Telefonszám">
+                    <input type="text" id="address" placeholder="Szállítási cím">
+                    <button type="submit">Adatok mentése</button>
+                </form>
+            </div>
+            <div id="userOrders" class="profile-section" style="display: none;">
+                <div class="orders-list">
+                    <!-- Orders will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Di-Plant Nyelvkönyvbolt</h4>
+                <p>Az Ön megbízható partnere a nyelvtanulásban</p>
+            </div>
+            <div class="footer-section">
+                <h4>Gyors linkek</h4>
+                <a href="konyvek.html">Könyvek</a>
+                <a href="rolunk.html">Rólunk</a>
+                <a href="index.html#kapcsolat">Kapcsolat</a>
+            </div>
+            <div class="footer-section">
+                <h4>Kövessen minket</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Di-Plant Nyelvkönyvbolt. Minden jog fenntartva.</p>
+        </div>
+    </footer>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/translations.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+</body>
+</html>
