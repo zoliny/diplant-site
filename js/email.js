@@ -8,6 +8,13 @@ document.addEventListener('DOMContentLoaded', function() {
         contactForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
+            // reCAPTCHA check
+            var recaptchaResponse = grecaptcha.getResponse();
+            if (!recaptchaResponse) {
+                showNotification('Kérjük, igazolja, hogy nem robot!', 'error');
+                return;
+            }
+
             const templateParams = {
                 to_email: 'diplant.info@gmail.com',
                 from_email: this.email.value,
@@ -15,11 +22,12 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             // Send email using the correct service ID and template ID
-            emailjs.send('service_b68v0x7', 'template_contact', templateParams)
+            emailjs.send('service_b68v0x7', 'template_a8t0qdt', templateParams)
                 .then(function(response) {
                     console.log('Email sent successfully:', response);
                     showNotification('Üzenet sikeresen elküldve!', 'success');
                     contactForm.reset();
+                    grecaptcha.reset();
                 }, function(error) {
                     console.error('EmailJS error:', error);
                     showNotification('Hiba történt az üzenet küldése során. Kérjük, próbálja újra később.', 'error');
@@ -35,7 +43,6 @@ if (typeof showNotification !== 'function') {
         notification.className = `notification ${type}`;
         notification.textContent = message;
         document.body.appendChild(notification);
-        
         setTimeout(() => {
             notification.remove();
         }, 3000);

@@ -214,8 +214,32 @@ const loginBtn = document.getElementById('loginBtn');
 if (loginBtn) {
     loginBtn.onclick = () => {
         authModal.style.display = 'block';
+        // Re-render reCAPTCHA in registration form when modal is shown
+        setTimeout(() => {
+            const registerForm = document.getElementById('registerForm');
+            const recaptchaDiv = registerForm ? registerForm.querySelector('.g-recaptcha') : null;
+            if (recaptchaDiv && typeof grecaptcha !== 'undefined') {
+                // Remove any previous widget
+                recaptchaDiv.innerHTML = '';
+                grecaptcha.render(recaptchaDiv, {
+                    sitekey: '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n'
+                });
+            }
+        }, 100);
     };
 }
+
+// Show contact section reCAPTCHA when page loads
+window.addEventListener('DOMContentLoaded', function() {
+    const contactForm = document.getElementById('contactForm');
+    const recaptchaDiv = contactForm ? contactForm.querySelector('.g-recaptcha') : null;
+    if (recaptchaDiv && typeof grecaptcha !== 'undefined') {
+        recaptchaDiv.innerHTML = '';
+        grecaptcha.render(recaptchaDiv, {
+            sitekey: '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n'
+        });
+    }
+});
 
 // Show profile modal
 const profileBtn = document.getElementById('profileBtn');
@@ -274,6 +298,13 @@ if (registerForm) {
         const password = registerForm.querySelectorAll('input[type="password"]')[0].value;
         const passwordConfirm = registerForm.querySelectorAll('input[type="password"]')[1].value;
 
+        // reCAPTCHA check
+        const recaptchaResponse = grecaptcha.getResponse();
+        if (!recaptchaResponse) {
+            showNotification('Kérjük, igazolja, hogy nem robot!', 'error');
+            return;
+        }
+
         if (password !== passwordConfirm) {
             showNotification('A jelszavak nem egyeznek!', 'error');
             return;
@@ -297,6 +328,7 @@ if (registerForm) {
             
             authModal.style.display = 'none';
             registerForm.reset();
+            grecaptcha.reset();
             showNotification('Sikeres regisztráció!');
         } catch (error) {
             console.error('Registration error:', error);
