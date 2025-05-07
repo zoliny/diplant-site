@@ -190,6 +190,15 @@ document.querySelectorAll('.tab-btn').forEach(button => {
         if (parent.contains(loginForm)) {
             loginForm.style.display = tabName === 'login' ? 'block' : 'none';
             registerForm.style.display = tabName === 'register' ? 'block' : 'none';
+            // Re-render reCAPTCHA when switching to registration tab
+            if (tabName === 'register') {
+                setTimeout(() => {
+                    const recaptchaDiv = registerForm ? registerForm.querySelector('.g-recaptcha') : null;
+                    if (recaptchaDiv) {
+                        renderRecaptchaWhenReady(recaptchaDiv, '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n');
+                    }
+                }, 100);
+            }
         } else {
             document.getElementById('userInfo').style.display = tabName === 'info' ? 'block' : 'none';
             document.getElementById('userOrders').style.display = tabName === 'orders' ? 'block' : 'none';
@@ -218,12 +227,8 @@ if (loginBtn) {
         setTimeout(() => {
             const registerForm = document.getElementById('registerForm');
             const recaptchaDiv = registerForm ? registerForm.querySelector('.g-recaptcha') : null;
-            if (recaptchaDiv && typeof grecaptcha !== 'undefined') {
-                // Remove any previous widget
-                recaptchaDiv.innerHTML = '';
-                grecaptcha.render(recaptchaDiv, {
-                    sitekey: '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n'
-                });
+            if (recaptchaDiv) {
+                renderRecaptchaWhenReady(recaptchaDiv, '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n');
             }
         }, 100);
     };
@@ -233,11 +238,8 @@ if (loginBtn) {
 window.addEventListener('DOMContentLoaded', function() {
     const contactForm = document.getElementById('contactForm');
     const recaptchaDiv = contactForm ? contactForm.querySelector('.g-recaptcha') : null;
-    if (recaptchaDiv && typeof grecaptcha !== 'undefined') {
-        recaptchaDiv.innerHTML = '';
-        grecaptcha.render(recaptchaDiv, {
-            sitekey: '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n'
-        });
+    if (recaptchaDiv) {
+        renderRecaptchaWhenReady(recaptchaDiv, '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n');
     }
 });
 
@@ -473,4 +475,17 @@ function showNotification(message, type = 'success') {
     setTimeout(() => {
         notification.remove();
     }, 3000);
+}
+
+// Helper function to render reCAPTCHA when ready
+function renderRecaptchaWhenReady(container, sitekey) {
+    function tryRender() {
+        if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
+            container.innerHTML = '';
+            window.grecaptcha.render(container, { sitekey });
+        } else {
+            setTimeout(tryRender, 100);
+        }
+    }
+    tryRender();
 }

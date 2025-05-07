@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Könyvek listája - Di-Plant Nyelvkönyvbolt</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <img src="logo.png" alt="Di-Plant logo" class="logo-image">
+                <span class="logo-text">Di-Plant Nyelvkönyvbolt</span>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <h1 id="themeTitle">Könyvek</h1>
+        <div class="book-grid"></div>
+    </main>
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Di-Plant Nyelvkönyvbolt</h4>
+                <p>Az Ön megbízható partnere a nyelvtanulásban</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Di-Plant Nyelvkönyvbolt. Minden jog fenntartva.</p>
+        </div>
+    </footer>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/books-list.js"></script>
+</body>
+</html>

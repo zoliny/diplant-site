@@ -41,12 +41,52 @@ let currentLanguage = localStorage.getItem('language') || 'hu';
 document.addEventListener('DOMContentLoaded', () => {
     initLanguage();
     loadBooks();
+
+    // Use event delegation for genre bubbles
+    const bubbleContainer = document.querySelector('.genre-bubbles-container');
+    if (bubbleContainer) {
+        bubbleContainer.addEventListener('click', function(e) {
+            const bubble = e.target.closest('.genre-bubble');
+            if (bubble) {
+                const genre = bubble.getAttribute('data-genre');
+                if (genre) {
+                    window.location.href = `konyvek-list.html?theme=${encodeURIComponent(genre)}`;
+                }
+            }
+        });
+    }
+
+    // Writer search box filtering
+    const writerSearch = document.getElementById('writerSearch');
+    if (writerSearch) {
+        writerSearch.addEventListener('input', function () {
+            filters.author = this.value.trim();
+            filters.topic = '';
+            // Remove active class from all bubbles
+            document.querySelectorAll('.genre-bubble').forEach(b => b.classList.remove('active'));
+            // Limit to 20 books for author
+            window.SEARCH_BOOK_LIMIT = 20;
+            filterAndDisplayBooks();
+        });
+    }
+
+    // Language checkbox filtering
+    const langCheckboxes = document.querySelectorAll('.lang-checkbox');
+    langCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function () {
+            // Collect all checked languages
+            const checked = Array.from(langCheckboxes).filter(c => c.checked).map(c => c.value.toLowerCase());
+            filters.language = checked.join(',');
+            // Limit to 20 books for language filter
+            window.SEARCH_BOOK_LIMIT = 20;
+            filterAndDisplayBooks();
+        });
+    });
 });
 
 function initLanguage() {
     const languageOptions = document.querySelectorAll('.language-option');
     const currentLangSpan = document.getElementById('currentLang');
-    
     // Set initial language display
     updateLanguageDisplay();
 
@@ -125,12 +165,10 @@ function translatePage() {
     translateSharedElements();
 }
 
-// Initialize search input if there's a search parameter
 if (searchParam) {
     searchInput.value = searchParam;
 }
 
-// Load and display books with filters
 async function loadBooks() {
     const bookGrid = document.querySelector('.book-grid');
     if (!bookGrid) return;
@@ -155,7 +193,6 @@ async function loadBooks() {
     }
 }
 
-// Real-time search functionality for filters
 function setupFilterSearch(inputElement, suggestionsElement, field) {
     let debounceTimer;
 
@@ -212,10 +249,9 @@ function setupFilterSearch(inputElement, suggestionsElement, field) {
     });
 }
 
-// Filter and display books based on selected filters and search
 function filterAndDisplayBooks() {
     const searchQuery = filters.search.toLowerCase();
-    const filteredBooks = allBooks.filter(book => {
+    let filteredBooks = allBooks.filter(book => {
         // Apply search filter
         const matchesSearch = !searchQuery || 
             book.title?.toLowerCase().includes(searchQuery) ||
@@ -228,8 +264,12 @@ function filterAndDisplayBooks() {
         // Apply individual filters
         const matchesAuthor = !filters.author || 
             book.author?.toLowerCase().includes(filters.author.toLowerCase());
-        const matchesLanguage = !filters.language || 
-            book.language?.toLowerCase().includes(filters.language.toLowerCase());
+        // Support multiple languages
+        let matchesLanguage = true;
+        if (filters.language) {
+            const langs = filters.language.split(',').map(l => l.trim());
+            matchesLanguage = langs.some(l => book.language?.toLowerCase().includes(l));
+        }
         const matchesPublisher = !filters.publisher || 
             book.publisher?.toLowerCase().includes(filters.publisher.toLowerCase());
         const matchesTopic = !filters.topic || 
@@ -244,7 +284,8 @@ function filterAndDisplayBooks() {
     // Determine the limit based on whether there's an active search or filter
     const hasActiveFilters = filters.search || filters.author || filters.language || 
                             filters.publisher || filters.topic || filters.maxPrice;
-    const limit = hasActiveFilters ? SEARCH_BOOK_LIMIT : DEFAULT_BOOK_LIMIT;
+    // Use SEARCH_BOOK_LIMIT if set, else fallback
+    const limit = (typeof window.SEARCH_BOOK_LIMIT === 'number') ? window.SEARCH_BOOK_LIMIT : (hasActiveFilters ? SEARCH_BOOK_LIMIT : DEFAULT_BOOK_LIMIT);
 
     // Limit the number of books to display
     const limitedBooks = filteredBooks.slice(0, limit);
@@ -252,7 +293,6 @@ function filterAndDisplayBooks() {
     displayBooks(limitedBooks, filteredBooks.length);
 }
 
-// Display books in the grid
 function displayBooks(books, totalCount) {
     const bookGrid = document.querySelector('.book-grid');
     if (books.length === 0) {
@@ -291,13 +331,11 @@ function displayBooks(books, totalCount) {
     bookGrid.innerHTML = resultCountHtml + booksHtml;
 }
 
-// Setup filter searches
 setupFilterSearch(authorFilter, authorSuggestions, 'author');
 setupFilterSearch(languageFilter, languageSuggestions, 'language');
 setupFilterSearch(publisherFilter, publisherSuggestions, 'publisher');
 setupFilterSearch(topicFilter, topicSuggestions, 'topic');
 
-// Add search form event listener
 const searchForm = document.getElementById('searchForm');
 if (searchForm) {
     searchForm.addEventListener('submit', (e) => {
@@ -305,8 +343,6 @@ if (searchForm) {
         const query = searchInput.value.trim();
         filters.search = query;
         filterAndDisplayBooks();
-        
-        // Update URL with search parameter
         if (query) {
             urlParams.set('search', query);
         } else {
@@ -316,11 +352,9 @@ if (searchForm) {
     });
 }
 
-// Shopping cart functionality
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 const cartCount = document.querySelector('.cart-count');
 
-// Show notification
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
