@@ -26,6 +26,10 @@ window.addEventListener('DOMContentLoaded', function() {
     checkAuthState();
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuthState();
+});
+
 // Function to check authentication state and update UI accordingly
 function checkAuthState() {
     if (firebase && firebase.auth) {
@@ -78,28 +82,29 @@ async function updateUIForLoggedInUser(user) {
         
         const userData = userDoc.exists ? userDoc.data() : { role: 'user' };
         const isAdmin = user.email === 'zol@gmail.com' || userData?.role === 'admin';
+        console.log('[DEBUG] isAdmin:', isAdmin, 'user.email:', user.email, 'userData:', userData);
         
         if (isAdmin) {
             if (window.ordersLink) window.ordersLink.style.display = 'none';
-            
-            let adminBtn = document.querySelector('.admin-btn');
-            if (!adminBtn) {
-                adminBtn = document.createElement('button');
+            // Remove any existing admin button
+            const oldAdminBtn = document.querySelector('.admin-btn');
+            if (oldAdminBtn) oldAdminBtn.remove();
+            // Insert admin button after the cart icon
+            const userActions = document.querySelector('.user-actions');
+            const cartElement = document.querySelector('.cart');
+            if (userActions && cartElement) {
+                const adminBtn = document.createElement('button');
                 adminBtn.className = 'auth-btn admin-btn';
                 adminBtn.style.marginRight = '10px';
                 adminBtn.innerHTML = '<i class="fas fa-cog"></i> Admin';
                 adminBtn.onclick = () => {
                     window.location.href = 'admin.html';
                 };
-                
-                const userActions = document.querySelector('.user-actions');
-                if (userActions) {
-                    const cartElement = document.querySelector('.cart');
-                    if (cartElement) {
-                        userActions.insertBefore(adminBtn, cartElement);
-                    } else {
-                        userActions.appendChild(adminBtn);
-                    }
+                // Insert right after cart
+                if (cartElement.nextSibling) {
+                    userActions.insertBefore(adminBtn, cartElement.nextSibling);
+                } else {
+                    userActions.appendChild(adminBtn);
                 }
             }
         } else {
@@ -108,6 +113,21 @@ async function updateUIForLoggedInUser(user) {
                 window.ordersLink.href = 'rendelesek.html';
             }
         }
+
+        // Ensure profileBtn click handler is attached
+        setTimeout(() => {
+            const profileBtn = document.getElementById('profileBtn');
+            if (profileBtn) {
+                profileBtn.onclick = () => {
+                    const profileModal = document.getElementById('profileModal');
+                    if (profileModal) {
+                        profileModal.style.display = 'block';
+                        if (typeof loadUserProfile === 'function') loadUserProfile();
+                        if (typeof loadUserOrders === 'function') loadUserOrders();
+                    }
+                };
+            }
+        }, 0);
     } catch (error) {
         console.error('Error in updateUIForLoggedInUser:', error);
     }
@@ -201,9 +221,12 @@ if (loginBtn) {
 const profileBtn = document.getElementById('profileBtn');
 if (profileBtn) {
     profileBtn.onclick = () => {
-        profileModal.style.display = 'block';
-        loadUserProfile();
-        loadUserOrders();
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal) {
+            profileModal.style.display = 'block';
+            if (typeof loadUserProfile === 'function') loadUserProfile();
+            if (typeof loadUserOrders === 'function') loadUserOrders();
+        }
     };
 }
 

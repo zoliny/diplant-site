@@ -74,6 +74,25 @@
         </div>
     </header>
 
+    <!-- User Profile Modal -->
+    <div id="profileModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="info">Adataim</button>
+            </div>
+            <div id="userInfo" class="profile-section">
+                <form id="updateProfileForm">
+                    <input type="text" id="fullName" placeholder="Teljes név" required>
+                    <input type="email" id="email" placeholder="E-mail cím" required readonly>
+                    <input type="tel" id="phone" placeholder="Telefonszám">
+                    <input type="text" id="address" placeholder="Szállítási cím">
+                    <button type="submit">Mentés</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Auth Modal (Login/Register) -->
     <div id="authModal" class="modal" style="display:none;">
         <div class="modal-content">
