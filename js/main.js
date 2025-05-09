@@ -222,19 +222,23 @@ function translatePage() {
 
 // Dynamic book loading
 function createBookCard(book) {
+    const authorHtml = book.author && book.author.trim() !== '' && book.author.toLowerCase() !== 'ismeretlen szerző'
+                       ? `<p class="author">${book.author}</p>`
+                       : '';
+    const priceHtml = book.price ? `${book.price} Ft` : 'Ár nem elérhető';
+
     return `
         <div class="book-card">
             <img src="${book.image || defaultPlaceholder}" 
-                 alt="${book.title}" 
+                 alt="${book.title || 'Cím nélkül'}" 
                  class="book-image"
                  onerror="handleImageError(this)">
             <div class="book-info">
-                <h3>${book.title}</h3>
-                <p class="author">${book.author}</p>
-                <p class="level">${book.language} ${book.level ? `- ${book.level}` : ''}</p>
-                <p class="price">${book.price} Ft</p>
+                <h3>${book.title || 'Cím nélkül'}</h3>
+                ${authorHtml}
+                <p class="price">${priceHtml}</p>
                 <button class="add-to-cart" data-book-id="${book.id}">
-                    Kosárba tesz
+                    <i class="fas fa-shopping-cart"></i> Kosárba tesz
                 </button>
             </div>
         </div>
@@ -339,58 +343,54 @@ async function loadPopularBooks() {
     const bookGrid = document.querySelector('.book-grid');
     if (!bookGrid) return;
     try {
-        // Only load up to 30 books to reduce Firestore reads
         const snapshot = await firebase.firestore().collection('books').limit(30).get();
         const allBooks = [];
         snapshot.forEach(doc => {
             const book = { id: doc.id, ...doc.data() };
             allBooks.push(book);
         });
-        // Only keep books with a non-empty author
-        const validBooks = allBooks.filter(book => book.author && book.author.trim() !== '');
-        // Shuffle and pick up to 11 random books
+        
+        const validBooks = allBooks; // Use all fetched books or apply other non-display related filters
+
         for (let i = validBooks.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [validBooks[i], validBooks[j]] = [validBooks[j], validBooks[i]];
         }
         const selectedBooks = validBooks.slice(0, 11);
-        // Make selectedBooks available globally for addToCart
-        window.books = selectedBooks;
+        window.books = selectedBooks; // Make selectedBooks available globally
+
         bookGrid.innerHTML = selectedBooks.map((book, idx) => {
+            const authorHtml = book.author && book.author.trim() !== '' && book.author.toLowerCase() !== 'ismeretlen szerző'
+                               ? `<p class="author">${book.author}</p>`
+                               : '';
+            const bookPrice = book.price ? `${book.price} Ft` : 'Ár nem elérhető';
             const addToCartBtn = `<button class="add-to-cart" data-book-id="${book.id}"><i class='fas fa-shopping-cart'></i> Kosárba</button>`;
-            if (idx === 0) {
-                // Highlight the first book as special
-                return `
-                <div class="book-card special-book">
-                    <img src="${book.image || 'diplant.jpeg'}" alt="${book.title || ''}" class="book-image" onerror="this.onerror=null;this.src='diplant.jpeg'">
+            
+            const cardClass = idx === 0 ? "book-card special-book" : "book-card";
+
+            return `
+                <div class="${cardClass}">
+                    <img src="${book.image || 'diplant.jpeg'}" alt="${book.title || 'Cím nélkül'}" class="book-image" onerror="this.onerror=null;this.src='diplant.jpeg'">
                     <div class="book-info">
                         <h3>${book.title || 'Cím nélkül'}</h3>
-                        <p class="author">${book.author}</p>
+                        ${authorHtml}
+                        <p class="price">${bookPrice}</p>
                         ${addToCartBtn}
                     </div>
                 </div>
-                `;
-            } else {
-                return `
-                <div class="book-card">
-                    <img src="${book.image || 'diplant.jpeg'}" alt="${book.title || ''}" class="book-image" onerror="this.onerror=null;this.src='diplant.jpeg'">
-                    <div class="book-info">
-                        <h3>${book.title || 'Cím nélkül'}</h3>
-                        <p class="author">${book.author}</p>
-                        ${addToCartBtn}
-                    </div>
-                </div>
-                `;
-            }
+            `;
         }).join('');
-        // Add event listeners to all add-to-cart buttons
+        
         bookGrid.querySelectorAll('.add-to-cart').forEach(btn => {
             btn.addEventListener('click', function() {
                 const bookId = this.getAttribute('data-book-id');
-                if (window.addToCart) window.addToCart(bookId);
+                if (window.addToCart) {
+                    window.addToCart(bookId);
+                }
             });
         });
     } catch (error) {
+        console.error('Error loading popular books:', error);
         bookGrid.innerHTML = '<p>Nem sikerült betölteni a könyveket.</p>';
     }
 }

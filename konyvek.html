@@ -76,12 +76,6 @@
 
     <main>
         <section class="books-page genre-bubble-layout">
-            <div class="genre-sidebar">
-                <div class="sidebar-section">
-                    <div class="sidebar-label">Író</div>
-                    <input type="search" id="writerSearch" class="sidebar-writer-search" placeholder="Író neve...">
-                </div>
-            </div>
             <div class="genre-bubbles-container">
                 <div class="genre-bubble" data-genre="nyelv-kurzuskönyv">Nyelv-kurzuskönyv</div>
                 <div class="genre-bubble" data-genre="könnyített-olvasmány">Könnyített olvasmány</div>
@@ -239,5 +233,18 @@
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
     <script src="js/books.js"></script>
+    <script>
+    // Enable bubble navigation to konyvek-list.html with topic filter
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.genre-bubble').forEach(function(bubble) {
+        bubble.addEventListener('click', function() {
+          const topic = bubble.getAttribute('data-genre');
+          if (topic) {
+            window.location.href = `konyvek-list.html?theme=${encodeURIComponent(topic)}`;
+          }
+        });
+      });
+    });
+    </script>
 </body>
 </html>

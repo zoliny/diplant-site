@@ -38,23 +38,42 @@ let filters = {
 // Initialize translations
 let currentLanguage = localStorage.getItem('language') || 'hu';
 
-document.addEventListener('DOMContentLoaded', () => {
-    initLanguage();
-    loadBooks();
-
-    // Use event delegation for genre bubbles
+// Always delegate clicks for genre bubbles, even if DOMContentLoaded timing is off
+(function ensureBubbleRedirect() {
+    function handler(e) {
+        const bubble = e.target.closest('.genre-bubble');
+        if (bubble) {
+            const genre = bubble.getAttribute('data-genre');
+            if (genre) {
+                console.log('[DEBUG] Genre bubble clicked:', genre); // Debug log
+                window.location.href = `konyvek-list.html?theme=${encodeURIComponent(genre)}`;
+            } else {
+                console.log('[DEBUG] Genre bubble clicked but no data-genre found');
+            }
+        }
+    }
+    // Try to attach immediately
     const bubbleContainer = document.querySelector('.genre-bubbles-container');
     if (bubbleContainer) {
-        bubbleContainer.addEventListener('click', function(e) {
-            const bubble = e.target.closest('.genre-bubble');
-            if (bubble) {
-                const genre = bubble.getAttribute('data-genre');
-                if (genre) {
-                    window.location.href = `konyvek-list.html?theme=${encodeURIComponent(genre)}`;
-                }
+        console.log('[DEBUG] Attaching bubble click handler immediately');
+        bubbleContainer.addEventListener('click', handler);
+    } else {
+        // If not found, try again after DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const bubbleContainer2 = document.querySelector('.genre-bubbles-container');
+            if (bubbleContainer2) {
+                console.log('[DEBUG] Attaching bubble click handler after DOMContentLoaded');
+                bubbleContainer2.addEventListener('click', handler);
+            } else {
+                console.log('[DEBUG] genre-bubbles-container not found in DOM');
             }
         });
     }
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
+    initLanguage();
+    loadBooks();
 
     // Writer search box filtering
     const writerSearch = document.getElementById('writerSearch');
@@ -295,40 +314,51 @@ function filterAndDisplayBooks() {
 
 function displayBooks(books, totalCount) {
     const bookGrid = document.querySelector('.book-grid');
+    if (!bookGrid) return; // Ensure bookGrid exists
+
     if (books.length === 0) {
         bookGrid.innerHTML = '<p>Nincsenek a szűrésnek megfelelő könyvek.</p>';
         return;
     }
 
-    const booksHtml = books.map(book => `
+    const booksHtml = books.map(book => {
+        const authorHtml = book.author && book.author.trim() !== '' && book.author.toLowerCase() !== 'ismeretlen szerző' 
+                           ? `<p class="author">${book.author}</p>` 
+                           : '';
+        const priceHtml = book.price ? `${book.price} Ft` : 'Ár nem elérhető';
+
+        // Move the Kosárba button directly below the image
+        return `
         <div class="book-card">
             <img src="${book.image || defaultPlaceholder}" 
-                 alt="${book.title}" 
+                 alt="${book.title || 'Cím nélkül'}" 
                  class="book-image"
                  onerror="this.onerror=null; this.src='${defaultPlaceholder}'">
+            <button class="add-to-cart" data-book-id="${book.id}" style="margin: 0.5rem auto 0.5rem auto; display: block;"><i class="fas fa-shopping-cart"></i> Kosárba</button>
             <div class="book-info">
                 <h3>${book.title || 'Cím nélkül'}</h3>
-                <p class="author">${book.author || 'Ismeretlen szerző'}</p>
-                <p class="details">
-                    ${book.language ? `<span class="language">${book.language}</span>` : ''}
-                    ${book.topic ? `<span class="topic">${book.topic}</span>` : ''}
-                </p>
-                <p class="publisher">${book.publisher || ''}</p>
-                <p class="price">${book.price ? `${book.price} Ft` : 'Ár nem elérhető'}</p>
-                <button onclick="addToCart('${book.id}')" class="add-to-cart">
-                    <i class="fas fa-shopping-cart"></i>
-                    Kosárba tesz
-                </button>
+                ${authorHtml}
+                <p class="price">${priceHtml}</p>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
-    // Add results count if there are more books than shown
     const resultCountHtml = totalCount > books.length 
         ? `<div class="results-count">Megjelenítve: ${books.length} / ${totalCount} könyv</div>`
         : '';
 
     bookGrid.innerHTML = resultCountHtml + booksHtml;
+
+    // Add event listeners to all add-to-cart buttons
+    bookGrid.querySelectorAll('.add-to-cart').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const bookId = this.getAttribute('data-book-id');
+            if (window.addToCart) {
+                window.addToCart(bookId);
+            }
+        });
+    });
 }
 
 setupFilterSearch(authorFilter, authorSuggestions, 'author');
