@@ -13,6 +13,32 @@ const retryOperation = async (operation, maxAttempts = 3, delay = 1000) => {
     }
 };
 
+// Handle reCAPTCHA initialization to ensure it's available on all pages
+function initializeRecaptcha() {
+    if (typeof grecaptcha === 'undefined') {
+        console.log('reCAPTCHA not yet loaded, will retry in 500ms');
+        setTimeout(initializeRecaptcha, 500);
+        return;
+    }
+    
+    try {
+        const recaptchaDivs = document.querySelectorAll('.g-recaptcha');
+        if (recaptchaDivs.length > 0) {
+            recaptchaDivs.forEach(div => {
+                // Only render if not already rendered
+                if (div.innerHTML.trim() === '') {
+                    grecaptcha.render(div, {
+                        'sitekey': '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n'
+                    });
+                }
+            });
+            console.log('reCAPTCHA initialized successfully');
+        }
+    } catch (error) {
+        console.error('reCAPTCHA initialization error:', error);
+    }
+}
+
 // Add these lines at the beginning of the file to ensure buttons are available right away
 // This helps prevent race conditions where the auth state is checked before buttons are found in the DOM
 window.addEventListener('DOMContentLoaded', function() {
@@ -24,6 +50,25 @@ window.addEventListener('DOMContentLoaded', function() {
     
     // Immediately start checking the auth state
     checkAuthState();
+    initializeRecaptcha();
+});
+
+// Ensure login button always opens auth modal, even if injected later
+window.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('click', function(e) {
+        const btn = e.target.closest('#loginBtn');
+        const authModal = document.getElementById('authModal');
+        if (btn && authModal) {
+            authModal.style.display = 'block';
+            setTimeout(() => {
+                const registerForm = document.getElementById('registerForm');
+                const recaptchaDiv = registerForm ? registerForm.querySelector('.g-recaptcha') : null;
+                if (recaptchaDiv && typeof renderRecaptchaWhenReady === 'function') {
+                    renderRecaptchaWhenReady(recaptchaDiv, '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n');
+                }
+            }, 100);
+        }
+    });
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -193,33 +238,6 @@ document.querySelectorAll('.tab-btn').forEach(button => {
             // Re-render reCAPTCHA when switching to registration tab
             if (tabName === 'register') {
                 setTimeout(() => {
-                    const recaptchaDiv = registerForm ? registerForm.querySelector('.g-recaptcha') : null;
-                    if (recaptchaDiv) {
-                        renderRecaptchaWhenReady(recaptchaDiv, '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n');
-                    }
-                }, 100);
-            }
-        } else {
-            document.getElementById('userInfo').style.display = tabName === 'info' ? 'block' : 'none';
-            document.getElementById('userOrders').style.display = tabName === 'orders' ? 'block' : 'none';
-        }
-    });
-});
-
-// Add network status monitoring
-let isOnline = true;
-window.addEventListener('online', () => {
-    isOnline = true;
-    showNotification('Helyreállt az internetkapcsolat', 'success');
-});
-
-window.addEventListener('offline', () => {
-    isOnline = false;
-    showNotification('Nincs internetkapcsolat. Az offline módban végzett műveletek szinkronizálásra kerülnek, amikor helyreáll a kapcsolat.', 'warning');
-});
-
-// Show auth modal
-const loginBtn = document.getElementById('loginBtn');
 if (loginBtn) {
     loginBtn.onclick = () => {
         authModal.style.display = 'block';
@@ -227,12 +245,30 @@ if (loginBtn) {
         setTimeout(() => {
             const registerForm = document.getElementById('registerForm');
             const recaptchaDiv = registerForm ? registerForm.querySelector('.g-recaptcha') : null;
-            if (recaptchaDiv) {
+            if (recaptchaDiv && typeof renderRecaptchaWhenReady === 'function') {
                 renderRecaptchaWhenReady(recaptchaDiv, '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n');
             }
         }, 100);
     };
 }
+
+// Delegated event for loginBtn in case it is injected after DOMContentLoaded
+window.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('click', function(e) {
+        const btn = e.target.closest('#loginBtn');
+        const authModal = document.getElementById('authModal');
+        if (btn && authModal) {
+            authModal.style.display = 'block';
+            setTimeout(() => {
+                const registerForm = document.getElementById('registerForm');
+                const recaptchaDiv = registerForm ? registerForm.querySelector('.g-recaptcha') : null;
+                if (recaptchaDiv && typeof renderRecaptchaWhenReady === 'function') {
+                    renderRecaptchaWhenReady(recaptchaDiv, '6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n');
+                }
+            }, 100);
+        }
+    });
+});
 
 // Show contact section reCAPTCHA when page loads
 window.addEventListener('DOMContentLoaded', function() {

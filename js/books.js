@@ -3,6 +3,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const filterParam = urlParams.get('filter');
 const searchParam = urlParams.get('search');
 const maxPriceParam = urlParams.get('max');
+const themeParam = urlParams.get('theme');
 
 // Default placeholder image
 const defaultPlaceholder = 'diplant.jpeg';
@@ -30,7 +31,7 @@ let filters = {
     author: '',
     language: '',
     publisher: '',
-    topic: '',
+    topic: themeParam || '', // Use theme from URL if present
     search: searchParam || '',
     maxPrice: maxPriceParam ? parseInt(maxPriceParam) : null
 };
@@ -72,6 +73,12 @@ let currentLanguage = localStorage.getItem('language') || 'hu';
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
+    // If theme is present in URL, set topic filter
+    if (themeParam) {
+        filters.topic = themeParam;
+        if (topicFilter) topicFilter.value = themeParam;
+    }
+
     initLanguage();
     loadBooks();
 
@@ -193,9 +200,9 @@ async function loadBooks() {
     if (!bookGrid) return;
 
     try {
-        const snapshot = await db.collection('books').orderBy('createdAt', 'desc').limit(30).get();
+        // Fetch ALL books, then filter and show max 30
+        const snapshot = await db.collection('books').get();
         allBooks = [];
-        
         snapshot.forEach(doc => {
             const book = {
                 id: doc.id,
@@ -203,8 +210,7 @@ async function loadBooks() {
             };
             allBooks.push(book);
         });
-        
-        // Display books with initial search/filter
+        // Display books with initial search/filter (will limit to 30 in filterAndDisplayBooks)
         filterAndDisplayBooks();
     } catch (error) {
         console.error('Error loading books:', error);
@@ -271,14 +277,26 @@ function setupFilterSearch(inputElement, suggestionsElement, field) {
 function filterAndDisplayBooks() {
     const searchQuery = filters.search.toLowerCase();
     let filteredBooks = allBooks.filter(book => {
-        // Apply search filter
-        const matchesSearch = !searchQuery || 
-            book.title?.toLowerCase().includes(searchQuery) ||
-            book.author?.toLowerCase().includes(searchQuery) ||
-            book.language?.toLowerCase().includes(searchQuery) ||
-            book.publisher?.toLowerCase().includes(searchQuery) ||
-            book.topic?.toLowerCase().includes(searchQuery) ||
-            book.description?.toLowerCase().includes(searchQuery);
+        // Apply search filter (now includes ISBN, with exact match prioritized)
+        let matchesSearch = false;
+        if (!searchQuery) {
+            matchesSearch = true;
+        } else {
+            // Prioritize exact ISBN match
+            if (book.isbn && book.isbn.replace(/[-\s]/g, '') === searchQuery.replace(/[-\s]/g, '')) {
+                matchesSearch = true;
+            } else {
+                matchesSearch =
+                    book.title?.toLowerCase().includes(searchQuery) ||
+                    book.author?.toLowerCase().includes(searchQuery) ||
+                    book.language?.toLowerCase().includes(searchQuery) ||
+                    book.publisher?.toLowerCase().includes(searchQuery) ||
+                    (book.topic?.toLowerCase().includes(searchQuery)) ||
+                    (book.theme?.toLowerCase().includes(searchQuery)) ||
+                    book.description?.toLowerCase().includes(searchQuery) ||
+                    (book.isbn && book.isbn.replace(/[-\s]/g, '').includes(searchQuery.replace(/[-\s]/g, '')));
+            }
+        }
 
         // Apply individual filters
         const matchesAuthor = !filters.author || 
@@ -291,8 +309,11 @@ function filterAndDisplayBooks() {
         }
         const matchesPublisher = !filters.publisher || 
             book.publisher?.toLowerCase().includes(filters.publisher.toLowerCase());
+        // Normalize topic for comparison (replace hyphens with spaces)
+        const normalize = str => (str || '').toLowerCase().replace(/-/g, ' ').trim();
         const matchesTopic = !filters.topic || 
-            book.topic?.toLowerCase().includes(filters.topic.toLowerCase());
+            normalize(book.topic).includes(normalize(filters.topic)) ||
+            normalize(book.theme).includes(normalize(filters.topic));
         const matchesPrice = !filters.maxPrice || 
             (book.price && parseInt(book.price) <= filters.maxPrice);
 

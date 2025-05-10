@@ -1,5 +1,6 @@
 // Load cart from localStorage
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+let currentLanguage = localStorage.getItem('language') || 'hu';
 const cartCount = document.querySelector('.cart-count');
 const cartItems = document.querySelector('.cart-items');
 const itemCountElement = document.getElementById('itemCount');

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="hu">
-<head>
-    <meta charset="UTF-8">
+<head>    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebase.com https://*.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' wss://*.firebaseio.com https://*.googleapis.com https://*.firebase.com; script-src 'self' https://*.firebaseapp.com https://*.gstatic.com https://cdnjs.cloudflare.com https://www.google.com 'unsafe-inline'; frame-src https://www.google.com https://www.recaptcha.net; style-src 'self' https://*.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.googleapis.com https://via.placeholder.com">
     <title>Könyvek listája - Di-Plant Nyelvkönyvbolt</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -118,5 +118,29 @@
     </footer>
     <script src="js/firebase-config.js"></script>
     <script src="js/books-list.js"></script>
+
+    <!-- Auth Modal (Login/Register) -->
+    <div id="authModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">Bejelentkezés</button>
+                <button class="tab-btn" data-tab="register">Regisztráció</button>
+            </div>
+            <form id="loginForm" class="auth-form" style="display:block;">
+                <input type="email" placeholder="E-mail" required>
+                <input type="password" placeholder="Jelszó" required>
+                <button type="submit">Bejelentkezés</button>
+            </form>
+            <form id="registerForm" class="auth-form" style="display:none;">
+                <input type="text" placeholder="Teljes név" required>
+                <input type="email" placeholder="E-mail" required>
+                <input type="password" placeholder="Jelszó" required>
+                <input type="password" placeholder="Jelszó megerősítése" required>
+                <div class="g-recaptcha" data-sitekey="6LdD_jArAAAAAA-uIjISU8SUCnjPUNGneWvdvv1n"></div>
+                <button type="submit">Regisztráció</button>            </form>
+        </div>
+    </div>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 </html>
